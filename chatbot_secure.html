@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic AI Chatbot - Secure Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .user-info {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 10px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .auth-container {
+            padding: 30px;
+            text-align: center;
+        }
+
+        .auth-form {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #4facfe;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .chat-container {
+            display: none;
+            height: 500px;
+            overflow-y: auto;
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            word-wrap: break-word;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.bot .message-content {
+            background: #f1f1f1;
+            color: #333;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message-info {
+            font-size: 0.8em;
+            color: #666;
+            margin-top: 5px;
+            padding: 0 16px;
+        }
+
+        .input-container {
+            display: none;
+            padding: 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #ddd;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+        }
+
+        .message-input:focus {
+            border-color: #4facfe;
+        }
+
+        .send-button {
+            padding: 12px 20px;
+            border-radius: 25px;
+        }
+
+        .status {
+            text-align: center;
+            padding: 10px;
+            font-size: 0.9em;
+        }
+
+        .status.online { color: #28a745; }
+        .status.offline { color: #dc3545; }
+
+        .error {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .success {
+            color: #28a745;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .auth-toggle {
+            color: #4facfe;
+            cursor: pointer;
+            text-decoration: underline;
+            margin-top: 15px;
+            display: inline-block;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4facfe;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Dynamic AI Chatbot</h1>
+            <p>Secure AI Assistant with User Authentication</p>
+            <div class="user-info" id="userInfo">
+                <div><strong>Welcome, <span id="username"></span>!</strong></div>
+                <button class="btn btn-secondary" onclick="logout()">Logout</button>
+            </div>
+        </div>
+        
+        <div class="status" id="status">Checking connection...</div>
+        
+        <!-- Authentication Section -->
+        <div class="auth-container" id="authContainer">
+            <div class="auth-form">
+                <div id="loginForm">
+                    <h3>Login to Continue</h3>
+                    <div class="form-group">
+                        <label for="loginUsername">Username:</label>
+                        <input type="text" id="loginUsername" placeholder="Enter your username">
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Password:</label>
+                        <input type="password" id="loginPassword" placeholder="Enter your password">
+                    </div>
+                    <button class="btn" onclick="login()" id="loginBtn">Login</button>
+                    <div class="auth-toggle" onclick="showSignupForm()">Don't have an account? Sign up</div>
+                    <div id="loginError" class="error"></div>
+                </div>
+
+                <div id="signupForm" style="display: none;">
+                    <h3>Create New Account</h3>
+                    <div class="form-group">
+                        <label for="signupUsername">Username:</label>
+                        <input type="text" id="signupUsername" placeholder="Choose a username">
+                    </div>
+                    <div class="form-group">
+                        <label for="signupEmail">Email:</label>
+                        <input type="email" id="signupEmail" placeholder="Enter your email">
+                    </div>
+                    <div class="form-group">
+                        <label for="signupFullName">Full Name (Optional):</label>
+                        <input type="text" id="signupFullName" placeholder="Enter your full name">
+                    </div>
+                    <div class="form-group">
+                        <label for="signupPassword">Password:</label>
+                        <input type="password" id="signupPassword" placeholder="Choose a password (min 6 characters)">
+                    </div>
+                    <button class="btn" onclick="signup()" id="signupBtn">Sign Up</button>
+                    <div class="auth-toggle" onclick="showLoginForm()">Already have an account? Login</div>
+                    <div id="signupError" class="error"></div>
+                    <div id="signupSuccess" class="success"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Chat Section -->
+        <div class="chat-container" id="chatContainer">
+            <div class="message bot">
+                <div class="message-content">
+                    <strong>AI Assistant:</strong> Hello! I'm your secure AI assistant. I can help answer questions, have conversations, and assist with various tasks. What would you like to talk about?
+                    <div class="message-info">Features: Intent Recognition | Sentiment Analysis | Entity Extraction | Secure Sessions</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="input-container" id="inputContainer">
+            <div class="input-row">
+                <input type="text" id="messageInput" class="message-input" placeholder="Type your message here..." />
+                <button onclick="sendMessage()" id="sendButton" class="btn send-button">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin.replace(':3000', ':8000');
+        let authToken = localStorage.getItem('authToken');
+        let currentUser = null;
+        let sessionId = null;
+
+        // Check authentication status on load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkApiStatus();
+            if (authToken) {
+                verifyToken();
+            }
+        });
+
+        // API Status Check
+        async function checkApiStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                if (response.ok) {
+                    document.getElementById('status').textContent = '✅ Connected to AI Chatbot API';
+                    document.getElementById('status').className = 'status online';
+                } else {
+                    throw new Error('API not available');
+                }
+            } catch (error) {
+                document.getElementById('status').textContent = '❌ API not available. Please start the server.';
+                document.getElementById('status').className = 'status offline';
+            }
+        }
+
+        // Authentication Functions
+        async function login() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            const errorEl = document.getElementById('loginError');
+            const loginBtn = document.getElementById('loginBtn');
+
+            if (!username || !password) {
+                errorEl.textContent = 'Please enter both username and password';
+                return;
+            }
+
+            loginBtn.disabled = true;
+            loginBtn.innerHTML = '<span class="loading"></span> Logging in...';
+            errorEl.textContent = '';
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    authToken = data.access_token;
+                    currentUser = data.user;
+                    localStorage.setItem('authToken', authToken);
+                    showChatInterface();
+                } else {
+                    errorEl.textContent = data.detail || 'Login failed';
+                }
+            } catch (error) {
+                errorEl.textContent = 'Network error. Please try again.';
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Login';
+            }
+        }
+
+        async function signup() {
+            const username = document.getElementById('signupUsername').value.trim();
+            const email = document.getElementById('signupEmail').value.trim();
+            const fullName = document.getElementById('signupFullName').value.trim();
+            const password = document.getElementById('signupPassword').value;
+            const errorEl = document.getElementById('signupError');
+            const successEl = document.getElementById('signupSuccess');
+            const signupBtn = document.getElementById('signupBtn');
+
+            if (!username || !email || !password) {
+                errorEl.textContent = 'Please fill in all required fields';
+                return;
+            }
+
+            if (password.length < 6) {
+                errorEl.textContent = 'Password must be at least 6 characters long';
+                return;
+            }
+
+            signupBtn.disabled = true;
+            signupBtn.innerHTML = '<span class="loading"></span> Creating account...';
+            errorEl.textContent = '';
+            successEl.textContent = '';
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/signup`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        email: email,
+                        full_name: fullName || null,
+                        password: password
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    authToken = data.access_token;
+                    currentUser = data.user;
+                    localStorage.setItem('authToken', authToken);
+                    successEl.textContent = 'Account created successfully! Redirecting...';
+                    setTimeout(() => showChatInterface(), 1000);
+                } else {
+                    errorEl.textContent = data.detail || 'Signup failed';
+                }
+            } catch (error) {
+                errorEl.textContent = 'Network error. Please try again.';
+            } finally {
+                signupBtn.disabled = false;
+                signupBtn.textContent = 'Sign Up';
+            }
+        }
+
+        async function verifyToken() {
+            if (!authToken) return false;
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/verify-token`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    currentUser = { username: data.user, id: data.user_id };
+                    showChatInterface();
+                    return true;
+                } else {
+                    localStorage.removeItem('authToken');
+                    authToken = null;
+                    showAuthInterface();
+                    return false;
+                }
+            } catch (error) {
+                localStorage.removeItem('authToken');
+                authToken = null;
+                showAuthInterface();
+                return false;
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('authToken');
+            authToken = null;
+            currentUser = null;
+            sessionId = null;
+            showAuthInterface();
+        }
+
+        // UI Functions
+        function showLoginForm() {
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('signupForm').style.display = 'none';
+        }
+
+        function showSignupForm() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('signupForm').style.display = 'block';
+        }
+
+        function showAuthInterface() {
+            document.getElementById('authContainer').style.display = 'block';
+            document.getElementById('chatContainer').style.display = 'none';
+            document.getElementById('inputContainer').style.display = 'none';
+            document.getElementById('userInfo').style.display = 'none';
+        }
+
+        function showChatInterface() {
+            document.getElementById('authContainer').style.display = 'none';
+            document.getElementById('chatContainer').style.display = 'block';
+            document.getElementById('inputContainer').style.display = 'block';
+            document.getElementById('userInfo').style.display = 'block';
+            document.getElementById('username').textContent = currentUser.username;
+        }
+
+        // Chat Functions
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message || !authToken) return;
+            
+            const sendButton = document.getElementById('sendButton');
+            sendButton.disabled = true;
+            sendButton.innerHTML = '<span class="loading"></span>';
+            
+            addMessageToChat(message, 'user');
+            input.value = '';
+            
+            try {
+                const response = await fetch(`${API_BASE}/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        user_id: currentUser.id,
+                        session_id: sessionId,
+                        platform: 'web_secure'
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    sessionId = data.session_id;
+                    addMessageToChat(data.response.content, 'bot', {
+                        intent: data.analysis?.intent,
+                        sentiment: data.analysis?.sentiment,
+                        entities: data.analysis?.entities
+                    });
+                } else {
+                    if (response.status === 401) {
+                        logout();
+                        return;
+                    }
+                    addMessageToChat('Sorry, I encountered an error processing your message.', 'bot');
+                }
+            } catch (error) {
+                addMessageToChat('Sorry, I\'m having trouble connecting. Please try again.', 'bot');
+            } finally {
+                sendButton.disabled = false;
+                sendButton.textContent = 'Send';
+            }
+        }
+
+        function addMessageToChat(message, sender, analysis = null) {
+            const chatContainer = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            let analysisInfo = '';
+            if (analysis && (analysis.intent || analysis.sentiment || analysis.entities)) {
+                analysisInfo = `<div class="message-info">`;
+                if (analysis.intent) analysisInfo += `Intent: ${analysis.intent} | `;
+                if (analysis.sentiment) analysisInfo += `Sentiment: ${analysis.sentiment} | `;
+                if (analysis.entities && analysis.entities.length > 0) {
+                    analysisInfo += `Entities: ${analysis.entities.join(', ')}`;
+                }
+                analysisInfo += `</div>`;
+            }
+            
+            messageDiv.innerHTML = `
+                <div class="message-content">
+                    ${sender === 'bot' ? '<strong>AI Assistant:</strong> ' : ''}${message}
+                    ${analysisInfo}
+                </div>
+            `;
+            
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // Enter key support
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const activeElement = document.activeElement;
+                if (activeElement.id === 'messageInput') {
+                    sendMessage();
+                } else if (activeElement.id === 'loginPassword') {
+                    login();
+                } else if (activeElement.id === 'signupPassword') {
+                    signup();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

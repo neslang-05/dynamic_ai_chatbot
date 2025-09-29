@@ -4,12 +4,16 @@ FastAPI application for the Dynamic AI Chatbot.
 from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 import traceback
 from typing import Dict, Any
+from pathlib import Path
 
 from models import ChatRequest, ChatResponse
 from api.chat import ChatManager
 from api.dependencies import get_chat_manager
+from auth.router import router as auth_router
+from auth.repository import user_repository
 from connectors.slack import SlackConnector
 from connectors.telegram import TelegramConnector
 from utils.logger import setup_logger
@@ -36,6 +40,13 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    
+    # Mount static files (for demo.html and other static assets)
+    project_root = Path(__file__).parent.parent.parent
+    app.mount("/static", StaticFiles(directory=str(project_root)), name="static")
+    
+    # Include authentication router
+    app.include_router(auth_router)
     
     # Initialize connectors
     slack_connector = SlackConnector()
@@ -133,4 +144,11 @@ def create_app() -> FastAPI:
             raise HTTPException(status_code=500, detail="Failed to get analytics")
     
     logger.info("FastAPI application created successfully")
+    
+    # Initialize database indexes on startup
+    @app.on_event("startup")
+    async def startup_event():
+        await user_repository.create_indexes()
+        logger.info("Database indexes created")
+    
     return app
