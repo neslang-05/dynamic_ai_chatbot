@@ -83,13 +83,14 @@ class SessionManager:
         try:
             if session_id in self.sessions:
                 session = self.sessions[session_id]
-                session.context.append(turn)
+                # Append turn to the conversation_turns list (Session model uses conversation_turns)
+                session.conversation_turns.append(turn)
                 session.last_activity = datetime.utcnow()
                 
                 # Limit context length to prevent memory issues
                 max_length = settings.max_context_length
-                if len(session.context) > max_length:
-                    session.context = session.context[-max_length:]
+                if len(session.conversation_turns) > max_length:
+                    session.conversation_turns = session.conversation_turns[-max_length:]
                 
                 logger.debug(f"Added conversation turn to session {session_id}")
             

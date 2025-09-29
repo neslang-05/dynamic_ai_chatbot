@@ -148,7 +148,11 @@ def create_app() -> FastAPI:
     # Initialize database indexes on startup
     @app.on_event("startup")
     async def startup_event():
-        await user_repository.create_indexes()
-        logger.info("Database indexes created")
-    
+        try:
+            await user_repository.create_indexes()
+            logger.info("Database indexes created successfully")
+        except Exception as e:
+            logger.warning(f"Could not create database indexes: {e}")
+            logger.info("Application will continue without database indexes - they will be created when needed")
+
     return app

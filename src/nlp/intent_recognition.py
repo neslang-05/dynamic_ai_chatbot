@@ -3,10 +3,16 @@ Intent recognition using BERT-based models.
 """
 import re
 from typing import Dict, List
-from transformers import AutoTokenizer, AutoModelForSequenceClassification, pipeline
-import torch
 
-from models import Intent, IntentType
+# Try to import transformers.pipeline; if unavailable, we'll fall back to rule-based only
+try:
+    from transformers import pipeline  # type: ignore
+    _HAS_TRANSFORMERS = True
+except Exception:
+    pipeline = None
+    _HAS_TRANSFORMERS = False
+
+from models import IntentPrediction, IntentType
 from config import settings
 from utils.logger import setup_logger
 
@@ -28,16 +34,28 @@ class IntentRecognizer:
         """Initialize the BERT model for intent classification."""
         try:
             logger.info(f"Loading intent recognition model: {self.model_name}")
-            
-            # For now, we'll use a simple sentiment classifier as a placeholder
-            # In production, you would fine-tune BERT on your intent dataset
-            self.classifier = pipeline(
-                "text-classification",
-                model="microsoft/DialoGPT-medium",
-                return_all_scores=True
-            )
-            
-            logger.info("Intent recognition model loaded successfully")
+
+            # Attempt to load a text-classification model specified by settings
+            # If not available or loading fails, fall back to rule-based recognition
+            if not _HAS_TRANSFORMERS:
+                logger.info("transformers package not available; using rule-based recognizer")
+                self.classifier = None
+                return
+
+            if self.model_name:
+                try:
+                    self.classifier = pipeline(
+                        "text-classification",
+                        model=self.model_name,
+                        return_all_scores=True
+                    )
+                    logger.info("Intent recognition model loaded successfully")
+                except Exception as e:
+                    logger.warning(f"Could not load intent model '{self.model_name}': {e}")
+                    self.classifier = None
+            else:
+                logger.info("No intent model configured, using rule-based recognizer")
+                self.classifier = None
             
         except Exception as e:
             logger.error(f"Failed to load intent recognition model: {e}")
@@ -78,28 +96,28 @@ class IntentRecognizer:
             ]
         }
     
-    async def recognize_intent(self, text: str) -> Intent:
+    async def recognize_intent(self, text: str) -> IntentPrediction:
         """Recognize intent from text using hybrid approach."""
         try:
             # First try rule-based recognition
-            rule_intent = self._rule_based_intent(text)
-            if rule_intent.confidence > 0.7:
-                return rule_intent
+            rule_pred = self._rule_based_intent(text)
+            if rule_pred.confidence > 0.7:
+                return rule_pred
             
             # If rule-based has low confidence, try ML model
             if self.classifier:
-                ml_intent = await self._model_based_intent(text)
-                # Combine rule-based and ML results
-                if ml_intent.confidence > rule_intent.confidence:
-                    return ml_intent
-            
-            return rule_intent
+                ml_pred = await self._model_based_intent(text)
+                # Choose the prediction with higher confidence
+                if ml_pred.confidence > rule_pred.confidence:
+                    return ml_pred
+
+            return rule_pred
             
         except Exception as e:
             logger.error(f"Error in intent recognition: {e}")
-            return Intent(intent=IntentType.UNKNOWN, confidence=0.1)
+            return IntentPrediction(intent=IntentType.UNKNOWN, confidence=0.1)
     
-    def _rule_based_intent(self, text: str) -> Intent:
+    def _rule_based_intent(self, text: str) -> IntentPrediction:
         """Rule-based intent recognition."""
         text_lower = text.lower()
         best_intent = IntentType.UNKNOWN
@@ -120,33 +138,45 @@ class IntentRecognizer:
                 if confidence > best_confidence:
                     best_confidence = confidence
                     best_intent = intent_type
-        
-        return Intent(intent=best_intent, confidence=best_confidence)
+
+        return IntentPrediction(intent=best_intent, confidence=best_confidence)
     
-    async def _model_based_intent(self, text: str) -> Intent:
+    async def _model_based_intent(self, text: str) -> IntentPrediction:
         """ML model-based intent recognition."""
         try:
             # This is a placeholder implementation
             # In production, you would use a fine-tuned BERT model for intent classification
             
             # For now, we'll map sentiment to basic intents
+            # Run classifier synchronously (HF pipelines are synchronous)
             results = self.classifier(text)
-            
-            # Simple mapping based on confidence
-            confidence = results[0]['score'] if results else 0.1
-            
-            # Basic mapping logic (this would be replaced with proper intent classification)
+
+            # results may be a list of label/confidence dicts; pick the best score
+            confidence = 0.1
+            if results:
+                # If return_all_scores=True, results is list of dicts
+                if isinstance(results, list) and isinstance(results[0], dict):
+                    # HuggingFace new format: [{'label': 'LABEL_0', 'score': 0.9}, ...]
+                    best = max(results, key=lambda x: x.get('score', 0))
+                    confidence = best.get('score', 0.1)
+                elif isinstance(results, list) and isinstance(results[0], list):
+                    # Sometimes pipelines return nested lists; flatten
+                    flat = results[0]
+                    best = max(flat, key=lambda x: x.get('score', 0))
+                    confidence = best.get('score', 0.1)
+
+            # Basic heuristic mapping from text to intents if classifier does not map to domain labels
             if 'question' in text.lower() or '?' in text:
-                return Intent(intent=IntentType.QUESTION, confidence=min(confidence + 0.2, 1.0))
+                return IntentPrediction(intent=IntentType.QUESTION, confidence=min(confidence + 0.2, 1.0))
             elif any(word in text.lower() for word in ['help', 'assist']):
-                return Intent(intent=IntentType.HELP, confidence=min(confidence + 0.2, 1.0))
+                return IntentPrediction(intent=IntentType.HELP, confidence=min(confidence + 0.2, 1.0))
             elif any(word in text.lower() for word in ['hello', 'hi', 'hey']):
-                return Intent(intent=IntentType.GREETING, confidence=min(confidence + 0.2, 1.0))
+                return IntentPrediction(intent=IntentType.GREETING, confidence=min(confidence + 0.2, 1.0))
             elif any(word in text.lower() for word in ['bye', 'goodbye']):
-                return Intent(intent=IntentType.GOODBYE, confidence=min(confidence + 0.2, 1.0))
+                return IntentPrediction(intent=IntentType.GOODBYE, confidence=min(confidence + 0.2, 1.0))
             else:
-                return Intent(intent=IntentType.UNKNOWN, confidence=confidence)
+                return IntentPrediction(intent=IntentType.UNKNOWN, confidence=confidence)
                 
         except Exception as e:
             logger.error(f"Error in model-based intent recognition: {e}")
-            return Intent(intent=IntentType.UNKNOWN, confidence=0.1)
+            return IntentPrediction(intent=IntentType.UNKNOWN, confidence=0.1)

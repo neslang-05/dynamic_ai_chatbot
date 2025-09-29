@@ -56,7 +56,7 @@ class IntentRecognizer:
             return self._rule_based_intent(text)
         except Exception as e:
             logger.error(f"Error in intent recognition: {e}")
-            return Intent(intent=IntentType.UNKNOWN, confidence=0.1)
+            return IntentType.UNKNOWN
     
     def _rule_based_intent(self, text: str) -> Intent:
         """Rule-based intent recognition."""
@@ -80,4 +80,4 @@ class IntentRecognizer:
                     best_confidence = confidence
                     best_intent = intent_type
         
-        return Intent(intent=best_intent, confidence=best_confidence)
+        return best_intent

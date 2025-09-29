@@ -22,11 +22,25 @@ class UserRepository:
         
     async def create_indexes(self):
         """Create database indexes for users collection."""
-        await self.users_collection.create_index("username", unique=True)
-        await self.users_collection.create_index("email", unique=True)
+        try:
+            await self.users_collection.create_index("username", unique=True)
+            await self.users_collection.create_index("email", unique=True)
+        except Exception as e:
+            # Log but don't fail - indexes will be created when first user is created
+            print(f"Could not create indexes during startup: {e}")
+    
+    async def ensure_indexes(self):
+        """Ensure indexes exist, create if not."""
+        try:
+            await self.create_indexes()
+        except Exception:
+            pass  # Ignore errors, indexes might already exist
     
     async def create_user(self, user_data: UserSignup) -> UserProfile:
         """Create a new user."""
+        # Ensure indexes exist
+        await self.ensure_indexes()
+        
         # Hash the password
         hashed_password = password_manager.hash_password(user_data.password)
         

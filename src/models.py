@@ -1,7 +1,7 @@
 """
-Data models for the i want to setup a dashboard for the 
- using Pydantic.
+Data models for the Dynamic AI Chatbot using Pydantic.
 """
+import uuid
 from datetime import datetime
 from typing import Optional, List, Dict, Any, Union
 from enum import Enum
@@ -82,6 +82,10 @@ class Message(BaseModel):
     text: str = Field(..., description="Message text")
     platform: Platform = Field(Platform.API, description="Source platform")
     timestamp: datetime = Field(default_factory=datetime.utcnow)
+    # NLP analysis fields
+    intent: Intent = Field(Intent.UNKNOWN, description="Detected intent")
+    sentiment: Sentiment = Field(Sentiment.NEUTRAL, description="Detected sentiment")
+    entities: List[Entity] = Field(default_factory=list, description="Extracted entities")
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
 

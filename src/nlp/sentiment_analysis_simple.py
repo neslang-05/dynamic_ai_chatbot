@@ -38,18 +38,11 @@ class SentimentAnalyzer:
             # Simple emotion detection based on keywords
             emotion = self._detect_emotion(text)
             
-            return Sentiment(
-                sentiment=sentiment,
-                confidence=confidence,
-                emotion=emotion
-            )
+            return sentiment
             
         except Exception as e:
             logger.error(f"Error in sentiment analysis: {e}")
-            return Sentiment(
-                sentiment=SentimentType.NEUTRAL,
-                confidence=0.1
-            )
+            return SentimentType.NEUTRAL
     
     def _detect_emotion(self, text: str) -> EmotionType:
         """Simple emotion detection based on keywords."""

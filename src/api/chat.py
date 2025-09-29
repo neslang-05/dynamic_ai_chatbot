@@ -16,6 +16,7 @@ from nlp.ner_simple import NamedEntityRecognizer
 from ai.response_generator_simple import ResponseGenerator
 from utils.session_manager import SessionManager
 from utils.logger import setup_logger
+from analytics import analytics
 
 logger = setup_logger(__name__)
 
@@ -65,8 +66,8 @@ class ChatManager:
             # Generate response
             response = await self._generate_response(message, session)
             
-            # Create conversation turn
-            turn = ConversationTurn(message=message, response=response)
+            # Create conversation turn (model fields: user_message, bot_response)
+            turn = ConversationTurn(user_message=message, bot_response=response)
             
             # Update session with new turn
             await self.session_manager.add_conversation_turn(session_id, turn)
@@ -75,14 +76,16 @@ class ChatManager:
             await self._log_analytics_event("message_processed", session, message)
             
             # Create API response
+            # Build ChatResponse using model fields
             chat_response = ChatResponse(
-                response=response.text,
+                message=response.text,
                 session_id=session_id,
                 intent=message.intent,
                 sentiment=message.sentiment,
                 entities=message.entities,
                 confidence=response.confidence,
-                timestamp=response.timestamp
+                metadata={},
+                suggestions=[]
             )
             
             logger.info(f"Processed message successfully for session {session_id}")
@@ -92,7 +95,7 @@ class ChatManager:
             logger.error(f"Error processing message: {e}")
             # Return fallback response
             return ChatResponse(
-                response="I apologize, but I'm having trouble processing your message right now. Please try again.",
+                message="I apologize, but I'm having trouble processing your message right now. Please try again.",
                 session_id=session_id or str(uuid.uuid4()),
                 confidence=0.1
             )
@@ -101,13 +104,25 @@ class ChatManager:
         """Perform NLP analysis on the message."""
         try:
             # Intent recognition
-            message.intent = await self.intent_recognizer.recognize_intent(message.text)
+            intent_result = await self.intent_recognizer.recognize_intent(message.text)
+            if hasattr(intent_result, 'intent'):  # IntentPrediction
+                message.intent = intent_result.intent
+                message.metadata["intent_prediction"] = intent_result.dict()
+            else:  # str or IntentType from simple recognizer
+                message.intent = intent_result
+                message.metadata["intent_prediction"] = {"intent": intent_result, "confidence": 0.8}
             
             # Named entity recognition
             message.entities = await self.ner.extract_entities(message.text)
             
             # Sentiment analysis
-            message.sentiment = await self.sentiment_analyzer.analyze_sentiment(message.text)
+            sentiment_result = await self.sentiment_analyzer.analyze_sentiment(message.text)
+            if hasattr(sentiment_result, 'sentiment'):  # SentimentPrediction
+                message.sentiment = sentiment_result.sentiment
+                message.metadata["sentiment_prediction"] = sentiment_result.dict()
+            else:  # SentimentType from simple analyzer
+                message.sentiment = sentiment_result
+                message.metadata["sentiment_prediction"] = {"sentiment": sentiment_result, "confidence": 0.8, "scores": {}}
             
             logger.debug(f"NLP analysis completed for message: {message.id}")
             
@@ -153,13 +168,15 @@ class ChatManager:
                 platform=session.platform,
                 data={
                     "message_length": len(message.text),
-                    "intent": message.intent.dict() if message.intent else None,
-                    "sentiment": message.sentiment.dict() if message.sentiment else None,
+                    "intent": message.metadata.get("intent_prediction"),
+                    "sentiment": message.metadata.get("sentiment_prediction"),
                     "entities_count": len(message.entities)
                 }
             )
             
-            # In a real implementation, this would be sent to the analytics service
+            # Log to analytics service
+            analytics.log_event(event)
+            
             logger.debug(f"Analytics event logged: {event.event_type}")
             
         except Exception as e:
@@ -175,15 +192,18 @@ class ChatManager:
     
     async def get_analytics_stats(self) -> Dict[str, Any]:
         """Get analytics statistics."""
-        # In a real implementation, this would query the analytics database
-        return {
-            "total_sessions": 0,
-            "total_messages": 0,
-            "average_session_length": 0,
-            "top_intents": [],
-            "sentiment_distribution": {
-                "positive": 0,
-                "negative": 0,
-                "neutral": 0
+        try:
+            return analytics.get_stats()
+        except Exception as e:
+            logger.error(f"Error getting analytics stats: {e}")
+            return {
+                "total_sessions": 0,
+                "total_messages": 0,
+                "average_session_length": 0,
+                "top_intents": [],
+                "sentiment_distribution": {
+                    "positive": 0,
+                    "negative": 0,
+                    "neutral": 0
+                }
             }
-        }

@@ -15,7 +15,6 @@ logger = setup_logger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
-
 @router.post("/signup", response_model=Token)
 async def signup(user_data: UserSignup):
     """Register a new user."""
@@ -50,7 +49,6 @@ async def signup(user_data: UserSignup):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error during registration"
         )
-
 
 @router.post("/login", response_model=Token)
 async def login(user_credentials: UserLogin):
@@ -119,3 +117,4 @@ async def verify_token(
         "user": current_user.username,
         "user_id": current_user.id
     }
+    
