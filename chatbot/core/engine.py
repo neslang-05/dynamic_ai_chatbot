@@ -7,10 +7,10 @@ from typing import Dict, List, Optional, Tuple
 from datetime import datetime
 import json
 
-from .nlp.processor import NLPProcessor
-from .memory.conversation_memory import ConversationMemory
-from .memory.learning_system import LearningSystem
-from .utils.config import Config
+from ..nlp.processor import NLPProcessor
+from ..memory.conversation_memory import ConversationMemory
+from ..memory.learning_system import LearningSystem
+from ..utils.config import Config
 
 
 class ChatbotEngine:

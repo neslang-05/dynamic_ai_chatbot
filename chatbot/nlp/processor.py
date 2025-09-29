@@ -4,26 +4,50 @@ Advanced NLP processor for message analysis and response generation.
 import logging
 import re
 from typing import Dict, List, Optional, Tuple
-import torch
-from transformers import (
-    AutoTokenizer, AutoModelForCausalLM, 
-    pipeline, AutoModelForSequenceClassification
-)
-import nltk
-from nltk.sentiment import SentimentIntensityAnalyzer
-from sentence_transformers import SentenceTransformer
 import numpy as np
 
-# Download required NLTK data
+# Optional imports - graceful fallback if not available
 try:
-    nltk.data.find('vader_lexicon')
-except LookupError:
-    nltk.download('vader_lexicon')
+    import torch
+    TORCH_AVAILABLE = True
+except ImportError:
+    torch = None
+    TORCH_AVAILABLE = False
 
 try:
-    nltk.data.find('punkt')
-except LookupError:
-    nltk.download('punkt')
+    from transformers import (
+        AutoTokenizer, AutoModelForCausalLM, 
+        pipeline, AutoModelForSequenceClassification
+    )
+    TRANSFORMERS_AVAILABLE = True
+except ImportError:
+    TRANSFORMERS_AVAILABLE = False
+
+try:
+    import nltk
+    from nltk.sentiment import SentimentIntensityAnalyzer
+    NLTK_AVAILABLE = True
+except ImportError:
+    nltk = None
+    NLTK_AVAILABLE = False
+
+try:
+    from sentence_transformers import SentenceTransformer
+    SENTENCE_TRANSFORMERS_AVAILABLE = True
+except ImportError:
+    SENTENCE_TRANSFORMERS_AVAILABLE = False
+
+# Download required NLTK data if available
+if NLTK_AVAILABLE:
+    try:
+        nltk.data.find('vader_lexicon')
+    except LookupError:
+        nltk.download('vader_lexicon')
+
+    try:
+        nltk.data.find('punkt')
+    except LookupError:
+        nltk.download('punkt')
 
 
 class NLPProcessor:
@@ -39,14 +63,22 @@ class NLPProcessor:
         # Initialize models
         self._load_models()
         
-        # Initialize NLTK components
-        self.sentiment_analyzer = SentimentIntensityAnalyzer()
+        # Initialize NLTK components if available
+        if NLTK_AVAILABLE:
+            self.sentiment_analyzer = SentimentIntensityAnalyzer()
+        else:
+            self.sentiment_analyzer = None
         
         self.logger.info("NLP Processor initialized successfully")
     
     def _load_models(self):
         """Load required ML models."""
         try:
+            if not TRANSFORMERS_AVAILABLE or not TORCH_AVAILABLE:
+                self.logger.warning("Transformers or PyTorch not available, using fallback implementations")
+                self._init_fallback_models()
+                return
+            
             # Load conversational model for response generation
             model_name = getattr(self.config, 'MODEL_NAME', 'microsoft/DialoGPT-medium')
             self.tokenizer = AutoTokenizer.from_pretrained(model_name, padding_side='left')
@@ -57,7 +89,10 @@ class NLPProcessor:
                 self.tokenizer.pad_token = self.tokenizer.eos_token
             
             # Load sentence transformer for semantic similarity
-            self.sentence_model = SentenceTransformer('all-MiniLM-L6-v2')
+            if SENTENCE_TRANSFORMERS_AVAILABLE:
+                self.sentence_model = SentenceTransformer('all-MiniLM-L6-v2')
+            else:
+                self.sentence_model = None
             
             # Initialize emotion classifier
             self.emotion_classifier = pipeline(
@@ -275,26 +310,53 @@ class NLPProcessor:
         return text
     
     def _analyze_sentiment(self, text: str) -> Dict:
-        """Analyze sentiment using VADER."""
+        """Analyze sentiment using VADER or fallback."""
         try:
-            scores = self.sentiment_analyzer.polarity_scores(text)
-            
-            # Determine overall sentiment
-            compound = scores['compound']
-            if compound >= 0.05:
-                overall = 'positive'
-            elif compound <= -0.05:
-                overall = 'negative'
+            if self.sentiment_analyzer:
+                scores = self.sentiment_analyzer.polarity_scores(text)
+                
+                # Determine overall sentiment
+                compound = scores['compound']
+                if compound >= 0.05:
+                    overall = 'positive'
+                elif compound <= -0.05:
+                    overall = 'negative'
+                else:
+                    overall = 'neutral'
+                
+                return {
+                    'positive': scores['pos'],
+                    'neutral': scores['neu'],
+                    'negative': scores['neg'],
+                    'compound': compound,
+                    'overall': overall
+                }
             else:
-                overall = 'neutral'
-            
-            return {
-                'positive': scores['pos'],
-                'neutral': scores['neu'],
-                'negative': scores['neg'],
-                'compound': compound,
-                'overall': overall
-            }
+                # Basic sentiment analysis using keywords
+                positive_words = ['happy', 'good', 'great', 'excellent', 'wonderful', 'amazing', 'love', 'like', 'excited', 'joy']
+                negative_words = ['sad', 'bad', 'terrible', 'awful', 'hate', 'angry', 'upset', 'frustrated', 'disappointed']
+                
+                text_lower = text.lower()
+                pos_count = sum(1 for word in positive_words if word in text_lower)
+                neg_count = sum(1 for word in negative_words if word in text_lower)
+                
+                if pos_count > neg_count:
+                    overall = 'positive'
+                    compound = 0.3
+                elif neg_count > pos_count:
+                    overall = 'negative'
+                    compound = -0.3
+                else:
+                    overall = 'neutral'
+                    compound = 0.0
+                
+                return {
+                    'positive': pos_count / max(1, pos_count + neg_count),
+                    'neutral': 0.5,
+                    'negative': neg_count / max(1, pos_count + neg_count),
+                    'compound': compound,
+                    'overall': overall
+                }
         except Exception as e:
             self.logger.error(f"Error in sentiment analysis: {e}")
             return {'overall': 'neutral', 'compound': 0.0}

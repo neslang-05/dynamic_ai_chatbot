@@ -22,10 +22,6 @@ def clean_text(text: str) -> str:
     # Remove or replace problematic characters
     text = re.sub(r'[^\w\s\.,!?;:\-\'"()]+', '', text)
     
-    # Ensure proper sentence ending
-    if text and not text.endswith(('.', '!', '?')):
-        text += '.'
-    
     return text
 
 
