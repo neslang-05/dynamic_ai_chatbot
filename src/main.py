@@ -1,9 +1,7 @@
 """
 Main entry point for the Dynamic AI Chatbot.
 """
-import asyncio
 import sys
-import os
 from pathlib import Path
 
 # Add src to path
@@ -17,17 +15,17 @@ from utils.logger import setup_logger
 logger = setup_logger(__name__)
 
 
-async def main():
+def main():
     """Main application entry point."""
     try:
         logger.info("Starting Dynamic AI Chatbot...")
         logger.info(f"Configuration: Host={settings.api_host}, Port={settings.api_port}")
         
-        # Create and run the application
+        # Create the application
         app = create_app()
         
         import uvicorn
-        await uvicorn.run(
+        uvicorn.run(
             app,
             host=settings.api_host,
             port=settings.api_port,
@@ -41,4 +39,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
