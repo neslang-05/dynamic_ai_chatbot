@@ -7,7 +7,9 @@ import {
   Star,
   Monitor,
   Shield,
-  Zap
+  Zap,
+  ExternalLink,
+  RefreshCw
 } from 'lucide-react';
 import MetricCard from './components/MetricCard';
 import ChartCard from './components/ChartCard';
@@ -23,6 +25,7 @@ const App = () => {
   const [realTimeMetrics, setRealTimeMetrics] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [lastUpdated, setLastUpdated] = useState(new Date());
 
   // Get the chatbot UI URL
   const getChatbotUrl = () => {
@@ -60,6 +63,7 @@ const App = () => {
       setIntentData(intentDistribution);
       setPlatformData(platformUsage);
       setRealTimeMetrics(realTimeData);
+      setLastUpdated(new Date());
     } catch (err) {
       setError('Failed to fetch dashboard data');
       console.error('Dashboard data fetch error:', err);
@@ -144,16 +148,31 @@ const App = () => {
     );
   }
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-600 via-purple-600 to-green-600 flex items-center justify-center">
+        <div className="bg-white rounded-2xl p-8 shadow-2xl text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Loading Dashboard</h2>
+          <p className="text-gray-600">Fetching real-time analytics...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (error) {
     return (
-      <div className="dashboard-container flex items-center justify-center">
-        <div className="text-center bg-white rounded-professional p-8 shadow-professional">
-          <div className="text-red-600 text-lg font-semibold mb-4">{error}</div>
+      <div className="min-h-screen bg-gradient-to-br from-blue-600 via-purple-600 to-green-600 flex items-center justify-center p-6">
+        <div className="bg-white rounded-2xl p-8 shadow-2xl text-center max-w-md">
+          <div className="text-red-500 text-5xl mb-4">⚠️</div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Connection Error</h2>
+          <p className="text-gray-600 mb-6">{error}</p>
           <button 
             onClick={fetchDashboardData}
-            className="btn-primary"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 flex items-center space-x-2 mx-auto"
           >
-            Retry Connection
+            <RefreshCw size={18} />
+            <span>Retry Connection</span>
           </button>
         </div>
       </div>
@@ -161,233 +180,236 @@ const App = () => {
   }
 
   return (
-    <div className="dashboard-container">
-      {/* Header */}
-      <header className="dashboard-header">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="dashboard-title">
-              🤖 AI Chatbot Analytics
-            </h1>
-            <p className="dashboard-subtitle">
-              Enterprise-Grade Real-time Monitoring & Intelligence
-            </p>
-          </div>
-          <div className="flex items-center space-x-4">
-            <a
-              href={getChatbotUrl()}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-secondary flex items-center space-x-2"
-            >
-              <Shield size={18} />
-              <span>Secure Interface</span>
-            </a>
-            <button
-              onClick={fetchDashboardData}
-              className="bg-white/20 hover:bg-white/30 text-white font-semibold py-3 px-6 rounded-professional transition-all duration-200 flex items-center space-x-2"
-            >
-              <Activity size={18} />
-              <span>Refresh Data</span>
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main>
-        {/* KPI Metrics */}
-        <div className="metrics-grid">
-          <MetricCard
-            title="Total Conversations"
-            value={kpis.total_messages?.toLocaleString() || '0'}
-            icon={MessageSquare}
-            color="navy"
-            trend="+12%"
-          />
-          <MetricCard
-            title="Active Users"
-            value={kpis.total_users?.toLocaleString() || '0'}
-            icon={Users}
-            color="green"
-            trend="+8%"
-          />
-          <MetricCard
-            title="Average Response"
-            value={`${kpis.response_time_ms || 0}ms`}
-            icon={Zap}
-            color="purple"
-            trend="-15ms"
-          />
-          <MetricCard
-            title="Satisfaction Score"
-            value={`${kpis.satisfaction_rating || 0}/5`}
-            icon={Star}
-            color="yellow"
-            trend="+0.3"
-          />
-        </div>
-
-        {/* Performance Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="card">
-            <div className="card-header">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                <Activity className="mr-2 text-green-600" size={20} />
-                System Performance
-              </h3>
+    <div className="min-h-screen bg-gradient-to-br from-blue-600 via-purple-600 to-green-600">
+      <div className="p-6">
+        {/* Header */}
+        <header className="bg-white rounded-2xl shadow-xl border border-gray-200 mb-8 p-8">
+          <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center space-y-4 lg:space-y-0">
+            <div>
+              <h1 className="text-4xl font-bold text-gray-900 mb-2 flex items-center">
+                <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center mr-4">
+                  <span className="text-white text-2xl">🤖</span>
+                </div>
+                AI Chatbot Analytics
+              </h1>
+              <p className="text-lg text-gray-600">
+                Enterprise-Grade Real-time Monitoring & Intelligence
+              </p>
+              <p className="text-sm text-gray-500 mt-1">
+                Last updated: {lastUpdated.toLocaleTimeString()}
+              </p>
             </div>
-            <div className="card-body">
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Positive Sentiment</span>
-                  <span className="font-semibold text-green-600">{kpis.positive_sentiment_percentage || 0}%</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Response Accuracy</span>
-                  <span className="font-semibold text-blue-600">94.2%</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Uptime</span>
-                  <span className="font-semibold text-green-600">99.9%</span>
-                </div>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
+              <a
+                href={getChatbotUrl()}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg"
+              >
+                <ExternalLink size={18} />
+                <span>Open Chatbot</span>
+              </a>
+              <button
+                onClick={fetchDashboardData}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg"
+              >
+                <RefreshCw size={18} />
+                <span>Refresh Data</span>
+              </button>
+            </div>
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <main className="space-y-8">
+          {/* KPI Metrics */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <MetricCard
+              title="Total Conversations"
+              value={kpis.total_messages?.toLocaleString() || '0'}
+              icon={MessageSquare}
+              color="blue"
+              trend="+12%"
+            />
+            <MetricCard
+              title="Active Users"
+              value={kpis.total_users?.toLocaleString() || '0'}
+              icon={Users}
+              color="green"
+              trend="+8%"
+            />
+            <MetricCard
+              title="Response Time"
+              value={`${kpis.response_time_ms || 0}ms`}
+              icon={Zap}
+              color="purple"
+              trend="-15ms"
+            />
+            <MetricCard
+              title="Satisfaction"
+              value={`${kpis.satisfaction_rating || 0}/5`}
+              icon={Star}
+              color="yellow"
+              trend="+0.3"
+            />
+          </div>
+
+          {/* Performance Overview */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* System Health */}
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-4 border-b border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                  <Activity className="mr-3 text-green-600" size={20} />
+                  System Health
+                </h3>
               </div>
-            </div>
-          </div>
-
-          <div className="card">
-            <div className="card-header">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                <Monitor className="mr-2 text-blue-600" size={20} />
-                Real-time Status
-              </h3>
-            </div>
-            <div className="card-body">
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Server Status</span>
-                  <span className="status-indicator status-online">Online</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Active Sessions</span>
-                  <span className="font-semibold text-blue-600">{realTimeMetrics.active_sessions || 0}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Queue Length</span>
-                  <span className="font-semibold text-gray-600">0</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="card">
-            <div className="card-header">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                <TrendingUp className="mr-2 text-green-600" size={20} />
-                Today's Metrics
-              </h3>
-            </div>
-            <div className="card-body">
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Messages Today</span>
-                  <span className="font-semibold text-blue-600">{realTimeMetrics.messages_today || 0}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">New Users</span>
-                  <span className="font-semibold text-green-600">{realTimeMetrics.new_users_today || 0}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Peak Hour</span>
-                  <span className="font-semibold text-gray-600">14:00-15:00</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Charts Grid */}
-        <div className="charts-grid">
-          {/* Conversation Trends */}
-          <ChartCard
-            title="Conversation Trends (7 Days)"
-            type="line"
-            data={conversationTrendsChartData}
-            height={300}
-          />
-
-          {/* Sentiment Distribution */}
-          <ChartCard
-            title="Sentiment Distribution"
-            type="doughnut"
-            data={sentimentChartData}
-            height={300}
-          />
-
-          {/* Intent Distribution */}
-          <ChartCard
-            title="Intent Distribution"
-            type="bar"
-            data={intentChartData}
-            height={300}
-          />
-
-          {/* Platform Usage */}
-          <ChartCard
-            title="Platform Usage"
-            type="pie"
-            data={platformChartData}
-            height={300}
-          />
-        </div>
-
-        {/* System Health */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <SystemHealth 
-            data={{
-              server_status: 'healthy',
-              chatbot_status: realTimeMetrics.server_status || 'healthy',
-              active_sessions: realTimeMetrics.active_sessions,
-              uptime_hours: realTimeMetrics.uptime_hours
-            }} 
-          />
-          
-          {/* Real-time Metrics */}
-          <div className="lg:col-span-2 bg-white rounded-lg shadow-lg border border-gray-100 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">Real-time Metrics</h3>
-            </div>
-            <div className="p-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-blue-50 rounded-lg p-4">
-                  <div className="text-sm text-blue-600">Messages/Min</div>
-                  <div className="text-2xl font-bold text-blue-900">
-                    {realTimeMetrics.messages_per_minute || 0}
+              <div className="p-6">
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Server Status</span>
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                      <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                      Online
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Uptime</span>
+                    <span className="font-semibold text-green-600">99.9%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Response Accuracy</span>
+                    <span className="font-semibold text-blue-600">94.2%</span>
                   </div>
                 </div>
-                <div className="bg-green-50 rounded-lg p-4">
-                  <div className="text-sm text-green-600">Avg Response Time</div>
-                  <div className="text-2xl font-bold text-green-900">
-                    {realTimeMetrics.average_response_time || 0}ms
+              </div>
+            </div>
+
+            {/* Real-time Metrics */}
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                  <Monitor className="mr-3 text-blue-600" size={20} />
+                  Live Metrics
+                </h3>
+              </div>
+              <div className="p-6">
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Active Sessions</span>
+                    <span className="font-semibold text-blue-600">{realTimeMetrics.active_sessions || 0}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Messages/Min</span>
+                    <span className="font-semibold text-purple-600">{realTimeMetrics.messages_per_minute || 0}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Queue Length</span>
+                    <span className="font-semibold text-gray-600">0</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Today's Summary */}
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+              <div className="bg-gradient-to-r from-purple-50 to-pink-50 px-6 py-4 border-b border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                  <TrendingUp className="mr-3 text-purple-600" size={20} />
+                  Today's Activity
+                </h3>
+              </div>
+              <div className="p-6">
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Messages Today</span>
+                    <span className="font-semibold text-blue-600">{realTimeMetrics.messages_today || 0}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Positive Sentiment</span>
+                    <span className="font-semibold text-green-600">{kpis.positive_sentiment_percentage || 0}%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">New Users</span>
+                    <span className="font-semibold text-purple-600">12</span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </main>
 
-      {/* Footer */}
-      <footer className="bg-white border-t border-gray-200 py-6 mt-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center text-gray-500">
-            <p>Dynamic AI Chatbot Dashboard © 2025</p>
-            <p className="text-sm mt-1">
-              Last updated: {new Date().toLocaleString()}
-            </p>
+          {/* Charts Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Conversation Trends */}
+            <ChartCard
+              title="Conversation Trends (7 Days)"
+              type="line"
+              data={conversationTrendsChartData}
+              height={300}
+            />
+
+            {/* Sentiment Distribution */}
+            <ChartCard
+              title="Sentiment Distribution"
+              type="doughnut"
+              data={sentimentChartData}
+              height={300}
+            />
+
+            {/* Intent Distribution */}
+            <ChartCard
+              title="Intent Distribution"
+              type="bar"
+              data={intentChartData}
+              height={300}
+            />
+
+            {/* Platform Usage */}
+            <ChartCard
+              title="Platform Usage"
+              type="pie"
+              data={platformChartData}
+              height={300}
+            />
           </div>
-        </div>
-      </footer>
+
+          {/* System Health Component */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <SystemHealth 
+              data={{
+                server_status: 'healthy',
+                chatbot_status: realTimeMetrics.server_status || 'healthy',
+                active_sessions: realTimeMetrics.active_sessions,
+                uptime_hours: realTimeMetrics.uptime_hours
+              }} 
+            />
+            
+            {/* Additional Real-time Metrics */}
+            <div className="lg:col-span-2 bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+              <div className="bg-gradient-to-r from-indigo-50 to-blue-50 px-6 py-4 border-b border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900">Performance Overview</h3>
+              </div>
+              <div className="p-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-blue-50 rounded-xl p-4">
+                    <div className="text-sm text-blue-600 mb-1">Messages/Min</div>
+                    <div className="text-2xl font-bold text-blue-900">
+                      {realTimeMetrics.messages_per_minute || 0}
+                    </div>
+                  </div>
+                  <div className="bg-green-50 rounded-xl p-4">
+                    <div className="text-sm text-green-600 mb-1">Avg Response Time</div>
+                    <div className="text-2xl font-bold text-green-900">
+                      {realTimeMetrics.average_response_time || 0}ms
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      
+      </div>
     </div>
   );
 };
