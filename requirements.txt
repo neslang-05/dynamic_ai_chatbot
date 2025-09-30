@@ -30,7 +30,7 @@ numpy==1.25.2
 pandas==2.1.4
 
 # Configuration and Environment
-python-dotenv==1.0.0
+python-dotenv==1.1.1
 pydantic-settings==2.1.0
 
 # Logging and Monitoring
