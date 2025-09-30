@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 class Platform(str, Enum):
     """Supported platforms for the chatbot."""
     WEB = "web"
+    WEB_SECURE = "web_secure"
     SLACK = "slack"
     TELEGRAM = "telegram"
     API = "api"

@@ -121,7 +121,7 @@ class ResponseGenerator:
     def _generate_rule_based_response(self, message: Message) -> str:
         """Generate rule-based response based on intent."""
         if message.intent:
-            intent = message.intent.intent
+            intent = message.intent
             responses = self.rule_based_responses.get(intent, self.rule_based_responses[IntentType.UNKNOWN])
         else:
             responses = self.rule_based_responses[IntentType.UNKNOWN]
@@ -134,25 +134,13 @@ class ResponseGenerator:
             if not message.sentiment:
                 return response
             
-            sentiment = message.sentiment.sentiment
-            emotion = message.sentiment.emotion
+            sentiment = message.sentiment
             
             # Adjust tone based on sentiment
             if sentiment == SentimentType.NEGATIVE:
-                if emotion == EmotionType.ANGER:
-                    response = f"I understand you're feeling frustrated. {response}"
-                elif emotion == EmotionType.SADNESS:
-                    response = f"I'm sorry you're feeling down. {response}"
-                else:
-                    response = f"I sense you might be having a difficult time. {response}"
-            
+                response = f"I sense you might be having a difficult time. {response}"
             elif sentiment == SentimentType.POSITIVE:
-                if emotion == EmotionType.JOY:
-                    response = f"I'm glad you're in good spirits! {response}"
-                elif emotion == EmotionType.LOVE:
-                    response = f"It's wonderful to sense such positive energy! {response}"
-                else:
-                    response = f"I'm happy to help! {response}"
+                response = f"I'm happy to help! {response}"
             
             return response
             

@@ -1,8 +1,9 @@
 import React from 'react';
 
-const MetricCard = ({ title, value, change, changeType, icon: Icon, color = "blue" }) => {
+const MetricCard = ({ title, value, change, changeType, icon: Icon, color = "blue", trend }) => {
   const colorClasses = {
     blue: "from-blue-400 to-blue-600",
+    navy: "from-blue-700 to-blue-900",
     green: "from-green-400 to-green-600", 
     yellow: "from-yellow-400 to-yellow-600",
     red: "from-red-400 to-red-600",
@@ -23,9 +24,9 @@ const MetricCard = ({ title, value, change, changeType, icon: Icon, color = "blu
             <p className="text-3xl font-bold text-gray-900 mt-2">
               {value}
             </p>
-            {change && (
+            {(change || trend) && (
               <p className={`text-sm mt-1 ${changeColor}`}>
-                {changeType === 'positive' ? '↗' : changeType === 'negative' ? '↘' : '→'} {change}
+                {changeType === 'positive' ? '↗' : changeType === 'negative' ? '↘' : '→'} {change || trend}
               </p>
             )}
           </div>

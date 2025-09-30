@@ -3,121 +3,414 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynamic AI Chatbot - Demo</title>
+    <title>Dynamic AI Chatbot - Professional Demo</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
+        :root {
+            --navy-primary: #1e3a8a;
+            --navy-secondary: #1e40af;
+            --navy-light: #3b82f6;
+            --green-primary: #14532d;
+            --green-secondary: #166534;
+            --green-light: #22c55e;
+            --dark-bg: #0f172a;
+            --light-bg: #f8fafc;
+            --surface: #ffffff;
+            --surface-dark: #1e293b;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --text-light: #ffffff;
+            --border-color: #e2e8f0;
+            --border-dark: #334155;
+        }
+
+        * {
             margin: 0;
-            padding: 20px;
-            background-color: #f5f5f5;
+            padding: 0;
+            box-sizing: border-box;
         }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, var(--navy-primary) 0%, var(--green-primary) 100%);
+            min-height: 100vh;
+            padding: 24px;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
         .container {
-            max-width: 800px;
+            max-width: 1300px;
             margin: 0 auto;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            background: var(--surface);
+            border-radius: 0;
+            box-shadow: 
+                0 32px 64px -12px rgba(0, 0, 0, 0.4),
+                0 0 0 1px rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            position: relative;
+            z-index: 1;
         }
+
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 10px 10px 0 0;
+            background: linear-gradient(135deg, var(--navy-primary) 0%, var(--navy-secondary) 50%, var(--green-primary) 100%);
+            color: var(--text-light);
+            padding: 48px;
             text-align: center;
+            position: relative;
+            overflow: hidden;
         }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent),
+                linear-gradient(0deg, rgba(0,0,0,0.1) 0%, transparent 100%);
+            animation: professionalShimmer 4s ease-in-out infinite;
+        }
+
+        @keyframes professionalShimmer {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.7; }
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 12px;
+            position: relative;
+            z-index: 1;
+            letter-spacing: -0.025em;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.375rem;
+            opacity: 0.95;
+            position: relative;
+            z-index: 1;
+            font-weight: 400;
+            letter-spacing: 0.025em;
+        }
+
         .chat-container {
-            height: 400px;
+            height: 550px;
             overflow-y: auto;
-            padding: 20px;
-            border-bottom: 1px solid #eee;
+            padding: 32px;
+            background: linear-gradient(135deg, var(--light-bg) 0%, #ffffff 100%);
+            border-bottom: 1px solid var(--border-color);
+            position: relative;
         }
+
+        .chat-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, var(--navy-primary), var(--green-primary));
+        }
+
         .message {
-            margin: 10px 0;
-            padding: 10px;
-            border-radius: 5px;
-            max-width: 70%;
-        }
-        .user-message {
-            background: #e3f2fd;
-            margin-left: auto;
-            text-align: right;
-        }
-        .bot-message {
-            background: #f3e5f5;
-        }
-        .message-info {
-            font-size: 0.8em;
-            color: #666;
-            margin-top: 5px;
-        }
-        .input-container {
-            padding: 20px;
+            margin: 20px 0;
             display: flex;
-            gap: 10px;
+            align-items: flex-start;
+            animation: slideInMessage 0.4s ease;
         }
+
+        @keyframes slideInMessage {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message-content {
+            max-width: 75%;
+            padding: 20px 24px;
+            border-radius: 0;
+            word-wrap: break-word;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-color);
+        }
+
+        .user-message .message-content {
+            background: linear-gradient(135deg, var(--navy-primary) 0%, var(--navy-secondary) 100%);
+            color: var(--text-light);
+            border: 1px solid var(--navy-secondary);
+        }
+
+        .bot-message .message-content {
+            background: var(--surface);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .message-info {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 12px;
+            padding: 0 24px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .input-container {
+            padding: 32px;
+            background: linear-gradient(135deg, var(--surface) 0%, #ffffff 100%);
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            border-top: 1px solid var(--border-color);
+            position: relative;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .input-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, var(--navy-primary), var(--green-primary));
+        }
+
         .message-input {
             flex: 1;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+            padding: 20px 24px;
+            border: 2px solid var(--border-color);
+            border-radius: 0;
             font-size: 16px;
+            outline: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: var(--surface);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-weight: 500;
         }
+
+        .message-input:focus {
+            border-color: var(--navy-primary);
+            box-shadow: 0 0 0 4px rgba(30, 58, 138, 0.1);
+            background: #ffffff;
+            transform: translateY(-1px);
+        }
+
+        .message-input::placeholder {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
         .send-button {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
+            background: linear-gradient(135deg, var(--navy-primary) 0%, var(--navy-secondary) 100%);
+            color: var(--text-light);
+            border: 2px solid var(--navy-secondary);
+            padding: 20px 32px;
+            border-radius: 0;
             cursor: pointer;
             font-size: 16px;
+            font-weight: 700;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-transform: uppercase;
+            letter-spacing: 0.075em;
+            min-width: 140px;
+            position: relative;
+            overflow: hidden;
         }
+
+        .send-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
         .send-button:hover {
-            background: #5a67d8;
+            background: linear-gradient(135deg, var(--green-primary) 0%, var(--green-secondary) 100%);
+            border-color: var(--green-secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(20, 83, 45, 0.3);
         }
+
+        .send-button:hover::before {
+            left: 100%;
+        }
+
+        .send-button:active {
+            transform: translateY(0);
+            box-shadow: 0 4px 15px rgba(20, 83, 45, 0.2);
+        }
+
         .send-button:disabled {
-            background: #ccc;
+            background: var(--text-secondary);
+            border-color: var(--text-secondary);
+            opacity: 0.6;
             cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
+
         .features {
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 0 0 10px 10px;
+            padding: 32px;
+            background: var(--light-bg);
+            border-top: 1px solid var(--border-color);
         }
+
+        .features h3 {
+            color: var(--text-primary);
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
         .feature-list {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px;
-            margin-top: 10px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
         }
+
         .feature {
-            background: white;
-            padding: 15px;
-            border-radius: 5px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            background: var(--surface);
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-color);
+            transition: all 0.2s ease;
         }
+
+        .feature:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .feature h4 {
+            color: var(--navy-primary);
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .feature p {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
         .status {
             text-align: center;
-            padding: 10px;
-            font-size: 0.9em;
-            color: #666;
+            padding: 16px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
-        .status.online { color: #28a745; }
-        .status.offline { color: #dc3545; }
+
+        .status.online { 
+            color: var(--green-light);
+            background: rgba(34, 197, 94, 0.1);
+        }
+        
+        .status.offline { 
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid transparent;
+            border-top: 2px solid currentColor;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 8px;
+            }
+            
+            .header {
+                padding: 24px 20px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .chat-container {
+                height: 400px;
+                padding: 16px;
+            }
+            
+            .message-content {
+                max-width: 85%;
+            }
+            
+            .input-container {
+                padding: 16px;
+            }
+            
+            .feature-list {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>🤖 Dynamic AI Chatbot</h1>
-            <p>A modular, API-driven chatbot with advanced NLP capabilities</p>
+            <p>Professional AI Assistant with Advanced NLP Capabilities</p>
         </div>
         
         <div class="status" id="status">Connecting...</div>
         
         <div class="chat-container" id="chatContainer">
             <div class="message bot-message">
-                <strong>AI Chatbot:</strong> Hello! I'm your AI assistant. I can help answer questions, have conversations, and assist with various tasks. Try asking me something!
-                <div class="message-info">Features: Intent Recognition | Sentiment Analysis | Entity Extraction</div>
+                <div class="message-content">
+                    <strong>AI Assistant:</strong> Hello! I'm your professional AI assistant. I can help answer questions, have conversations, and assist with various tasks. What would you like to discuss today?
+                    <div class="message-info">Features: Intent Recognition | Sentiment Analysis | Entity Extraction | Smart Responses</div>
+                </div>
             </div>
         </div>
         
@@ -127,11 +420,11 @@
         </div>
         
         <div class="features">
-            <h3>🚀 Features</h3>
+            <h3>🚀 Enterprise Features</h3>
             <div class="feature-list">
                 <div class="feature">
-                    <h4>🧠 NLP Understanding</h4>
-                    <p>Intent recognition, sentiment analysis, and named entity extraction</p>
+                    <h4>🧠 Advanced NLP</h4>
+                    <p>Sophisticated intent recognition, sentiment analysis, and named entity extraction for natural conversations</p>
                 </div>
                 <div class="feature">
                     <h4>💬 Smart Responses</h4>
@@ -139,11 +432,19 @@
                 </div>
                 <div class="feature">
                     <h4>📊 Real-time Analytics</h4>
-                    <p>Conversation tracking and performance metrics</p>
+                    <p>Comprehensive conversation tracking, performance metrics, and detailed insights for business intelligence</p>
                 </div>
                 <div class="feature">
-                    <h4>🔗 Multi-platform</h4>
-                    <p>Slack, Telegram, and web integration support</p>
+                    <h4>🔗 Multi-platform Support</h4>
+                    <p>Seamless integration with Slack, Telegram, web interfaces, and custom API endpoints</p>
+                </div>
+                <div class="feature">
+                    <h4>🔐 Enterprise Security</h4>
+                    <p>Advanced authentication, secure sessions, and user management for professional environments</p>
+                </div>
+                <div class="feature">
+                    <h4>⚡ High Performance</h4>
+                    <p>Optimized response times, scalable architecture, and robust error handling capabilities</p>
                 </div>
             </div>
         </div>
@@ -234,10 +535,12 @@
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${type}-message`;
             
-            const label = type === 'user' ? 'You' : 'AI Chatbot';
+            const label = type === 'user' ? 'You' : 'AI Assistant';
             messageDiv.innerHTML = `
-                <strong>${label}:</strong> ${message}
-                ${info ? `<div class="message-info">${info}</div>` : ''}
+                <div class="message-content">
+                    <strong>${label}:</strong> ${message}
+                    ${info ? `<div class="message-info">${info}</div>` : ''}
+                </div>
             `;
             
             chatContainer.appendChild(messageDiv);
