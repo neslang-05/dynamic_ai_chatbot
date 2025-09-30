@@ -1,0 +1,55 @@
+# Multi-stage build for production deployment
+FROM node:18-alpine AS frontend-build
+
+WORKDIR /app/frontend
+COPY dashboard/frontend/package*.json ./
+RUN npm ci --only=production
+COPY dashboard/frontend/ ./
+RUN npm run build
+
+# Python backend stage
+FROM python:3.9-slim AS backend
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy and install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY src/ ./src/
+COPY --from=frontend-build /app/frontend/build ./public/
+
+# Copy static files
+COPY chatbot_secure.html ./
+
+# Create non-root user
+RUN adduser --disabled-password --gecos '' appuser && \
+    chown -R appuser:appuser /app
+USER appuser
+
+# Create logs directory
+RUN mkdir -p logs
+
+# Environment variables
+ENV PYTHONPATH=/app/src
+ENV PYTHONUNBUFFERED=1
+ENV API_HOST=0.0.0.0
+ENV API_PORT=8000
+
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Run the application
+CMD ["python", "src/main.py"]

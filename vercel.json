@@ -1,0 +1,44 @@
+{
+  "version": 2,
+  "name": "dynamic-ai-chatbot",
+  "builds": [
+    {
+      "src": "dashboard/frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "build"
+      }
+    },
+    {
+      "src": "src/api/main.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/src/api/main.py"
+    },
+    {
+      "src": "/health",
+      "dest": "/src/api/main.py"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/dashboard/frontend/$1"
+    }
+  ],
+  "env": {
+    "MONGODB_URL": "@mongodb_url",
+    "OPENAI_API_KEY": "@openai_api_key",
+    "JWT_SECRET_KEY": "@jwt_secret_key",
+    "ENVIRONMENT": "production",
+    "API_HOST": "0.0.0.0",
+    "API_PORT": "8000"
+  },
+  "functions": {
+    "src/api/main.py": {
+      "runtime": "python3.9"
+    }
+  }
+}

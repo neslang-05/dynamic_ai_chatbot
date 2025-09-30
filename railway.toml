@@ -1,0 +1,12 @@
+# Railway deployment configuration
+[build]
+builder = "nixpacks"
+
+[deploy]
+healthcheckPath = "/health"
+restartPolicyType = "ON_FAILURE"
+startCommand = "python src/main.py"
+
+[env]
+PORT = { default = "8000" }
+PYTHONPATH = { default = "/app/src" }
