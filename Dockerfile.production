@@ -8,7 +8,7 @@ COPY dashboard/frontend/ ./
 RUN npm run build
 
 # Python backend stage
-FROM python:3.9-slim AS backend
+FROM python:3.13-slim AS backend
 
 WORKDIR /app
 
