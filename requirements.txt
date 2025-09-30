@@ -12,7 +12,7 @@ email-validator==2.1.0
 # NLP and AI Models
 transformers==4.35.2
 torch==2.5.1
-tokenizers==0.15.0
+tokenizers==0.22.1
 sentence-transformers==2.2.2
 vaderSentiment==3.3.2
 
